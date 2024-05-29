@@ -1,6 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using vShop.ProductApi.Context;
+using vShop.ProductApi.Domain.Repository.Implementation;
+using vShop.ProductApi.Domain.Repository.Interfaces;
+using vShop.ProductApi.Models.Repository.Implementation;
+using vShop.ProductApi.Models.Repository.Interfaces;
+using vShop.ProductApi.Services.Implementation;
+using vShop.ProductApi.Services.Interfaces;
 
 namespace vShop.ProductApi
 {
@@ -12,25 +18,30 @@ namespace vShop.ProductApi
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+            });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             // Conexão com o banco de dados Mysql
-            var mySQLConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+            var mySqlConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
             builder.Services.AddDbContext<AppDbContext>(options =>
-                    options.UseMySql(mySQLConnection, ServerVersion.AutoDetect(mySQLConnection)));
+                              options.UseMySql(mySqlConnection,
+                                ServerVersion.AutoDetect(mySqlConnection)));
 
             // Dto
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            builder.Services.AddControllers().AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-            });
-                    
+
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
+            builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
 
             var app = builder.Build();
 
